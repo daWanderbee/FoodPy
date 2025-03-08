@@ -1,0 +1,198 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/x-icon" href="{% static 'favicon.ico' %}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction Result</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        :root {
+            --primary: #4CAF50; /* Green */
+            --secondary: #FF9800; /* Orange */
+            --background: #f8f9fa;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text: #2E4057;
+            --success: #81C784;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            --hover-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--text);
+            background-image: url('https://res.cloudinary.com/wanderbee/image/upload/v1741426152/Untitled_design_zruwhc.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-color: #f5f7fa; /* Fallback color */
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.4);
+            z-index: -1;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 800px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            transition: transform 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--hover-shadow);
+        }
+        
+        .card-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            margin: 0;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 2rem;
+        }
+        
+        .prediction-value {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 1.5rem 0;
+            color: var(--primary);
+        }
+        
+        .button {
+            display: inline-block;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+        
+        .button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
+        }
+        
+        .error {
+            color: #e63946;
+            background-color: #f8d7da;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #e63946;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-header">
+                <h2>Prediction Result</h2>
+            </div>
+            
+            {% if prediction %}
+                <div class="chart-container">
+                    <canvas id="predictionChart"></canvas>
+                </div>
+                <div class="prediction-value">
+                    {{ prediction }}%
+                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const predictionValue = {{ prediction }};
+                        const remainingValue = 100 - predictionValue;
+                        
+                        const ctx = document.getElementById('predictionChart').getContext('2d');
+                        const chart = new Chart(ctx, {
+                            type: 'pie',
+                            data: {
+                                labels: ['Predicted Wastage', 'Consumed'],
+                                datasets: [{
+                                    data: [predictionValue, remainingValue],
+                                    backgroundColor: [
+                                        '#FF9800', /* Orange for wastage */
+                                        '#4CAF50'  /* Green for consumed */
+                                    ],
+                                    borderColor: [
+                                        '#ffffff',
+                                        '#ffffff'
+                                    ],
+                                    borderWidth: 2,
+                                    hoverOffset: 15
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: {
+                                    legend: {
+                                        position: 'bottom'
+                                    },
+                                    tooltip: {
+                                        callbacks: {
+                                            label: function(context) {
+                                                return context.label + ': ' + context.raw + '%';
+                                            }
+                                        }
+                                    }
+                                },
+                                cutout: '50%',
+                                animation: {
+                                    animateScale: true,
+                                    animateRotate: true
+                                }
+                            }
+                        });
+                    });
+                </script>
+            {% else %}
+                <div class="error">
+                    <p>Error: {{ error }}</p>
+                </div>
+            {% endif %}
+        </div>
+        <a href="{% url 'predict' %}" class="button">Make Another Prediction</a>
+    </div>
+</body>
+</html>
